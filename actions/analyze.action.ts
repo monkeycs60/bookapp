@@ -12,9 +12,12 @@ export const analyzeDocument = actionClient
 		try {
 			// Conversion du fichier en buffer
 			const buffer = Buffer.from(await file.arrayBuffer());
+			console.log('buffer', buffer);
 
 			// Analyse du PDF
 			const { sections, metadata } = await parsePDF(buffer);
+			console.log('sections', sections);
+			console.log('metadata', metadata);
 
 			// Définir la longueur du résumé selon le type
 			const summaryLengths = {

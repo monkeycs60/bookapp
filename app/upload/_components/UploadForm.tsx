@@ -25,12 +25,17 @@ export function UploadForm() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [fileError, setFileError] = useState<string | null>(null);
 
+	console.log('selectedFile', selectedFile);
+
 	const form = useForm<UploadFormValues>({
 		resolver: zodResolver(uploadFormSchema),
 		defaultValues: {
 			summaryType: 'flash',
 		},
 	});
+
+	const fileValue = form.watch('file');
+	console.log('fileValue', fileValue);
 
 	useEffect(() => {
 		return () => {
@@ -53,12 +58,14 @@ export function UploadForm() {
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0] || null;
 		setSelectedFile(file);
+		form.setValue('file', file);
 		setFileError(validateFile(file));
 	};
 
-	const { execute } = useAction(analyzeDocument);
+	const { executeAsync } = useAction(analyzeDocument);
 
-	const onSubmit = (values: UploadFormValues) => {
+	const onSubmit = async (values: UploadFormValues) => {
+		console.log('values', values);
 		if (!selectedFile) {
 			setFileError('Le fichier est requis');
 			return;
@@ -75,13 +82,13 @@ export function UploadForm() {
 			setProgress(0);
 
 			// Simulation de la progression
-			const progressInterval = setInterval(() => {
-				setProgress((prev) => Math.min(prev + 1, 95));
-			}, 500);
+			// const progressInterval = setInterval(() => {
+			// 	setProgress((prev) => Math.min(prev + 1, 95));
+			// }, 500);
 
-			const actionResult = execute(values);
-			clearInterval(progressInterval);
-			setProgress(100);
+			const actionResult = await executeAsync(values);
+			// clearInterval(progressInterval);
+			// setProgress(100);
 
 			console.log(actionResult);
 
