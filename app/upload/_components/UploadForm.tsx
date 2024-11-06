@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DevTool } from '@hookform/devtools';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,19 +14,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { uploadFormSchema, UploadFormValues } from '@/types/schemas/upload';
-import { useAction } from 'next-safe-action/hooks';
-import { analyzeDocument } from '@/actions/analyze.action';
 
 export function UploadForm() {
 	const [progress, setProgress] = useState(0);
 	const [isAnalyzing, setIsAnalyzing] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [fileError, setFileError] = useState<string | null>(null);
-
-	console.log('selectedFile', selectedFile);
 
 	const form = useForm<UploadFormValues>({
 		resolver: zodResolver(uploadFormSchema),
@@ -34,15 +31,7 @@ export function UploadForm() {
 		},
 	});
 
-	const fileValue = form.watch('file');
-	console.log('fileValue', fileValue);
-
-	useEffect(() => {
-		return () => {
-			setProgress(0);
-			setIsAnalyzing(false);
-		};
-	}, []);
+	// const fileValue = form.watch('file');
 
 	const validateFile = (file: File | null): string | null => {
 		if (!file) return 'Le fichier est requis';
@@ -62,8 +51,6 @@ export function UploadForm() {
 		setFileError(validateFile(file));
 	};
 
-	const { executeAsync } = useAction(analyzeDocument);
-
 	const onSubmit = async (values: UploadFormValues) => {
 		console.log('values', values);
 		if (!selectedFile) {
@@ -78,34 +65,38 @@ export function UploadForm() {
 		}
 
 		try {
+			console.log('début du try avant lexec serv action');
 			setIsAnalyzing(true);
 			setProgress(0);
 
-			// Simulation de la progression
-			// const progressInterval = setInterval(() => {
-			// 	setProgress((prev) => Math.min(prev + 1, 95));
-			// }, 500);
+			const arrayBuffer = await selectedFile.arrayBuffer();
+			const base64 = Buffer.from(arrayBuffer).toString('base64');
 
-			const actionResult = await executeAsync(values);
-			// clearInterval(progressInterval);
-			// setProgress(100);
+			const response = await fetch('/api/analyze', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					summaryType: values.summaryType,
+					file: {
+						name: selectedFile.name,
+						type: selectedFile.type,
+						size: selectedFile.size,
+						base64: base64,
+					},
+				}),
+			});
 
-			console.log(actionResult);
+			const result = await response.json();
 
-			// if (actionResult?.data?.success && actionResult?.data.pdf) {
-			// 	// Téléchargement du PDF
-			// 	const pdfBlob = new Blob(
-			// 		[Buffer.from(actionResult.data.pdf, 'base64')],
-			// 		{
-			// 		type: 'application/pdf',
-			// 	});
-			// 	const url = window.URL.createObjectURL(pdfBlob);
-			// 	const a = document.createElement('a');
-			// 	a.href = url;
-			// 	a.download = 'resume.pdf';
-			// 	a.click();
-			// 	window.URL.revokeObjectURL(url);
-			// }
+			if (!response.ok) {
+				throw new Error(result.message || 'Une erreur est survenue');
+			}
+
+			console.log('Résultat:', result);
+			setProgress(100);
+
 		} catch (error) {
 			console.error('Error:', error);
 		} finally {
@@ -233,6 +224,7 @@ export function UploadForm() {
 					)}
 				/>
 			</form>
+			<DevTool control={form.control} />
 		</Form>
 	);
 }

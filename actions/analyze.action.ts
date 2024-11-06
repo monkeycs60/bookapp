@@ -10,8 +10,9 @@ export const analyzeDocument = actionClient
 	.schema(uploadFormSchema)
 	.action(async ({ parsedInput: { file, summaryType } }) => {
 		try {
+			console.log('début de lanalyse');
 			// Conversion du fichier en buffer
-			const buffer = Buffer.from(await file.arrayBuffer());
+      const buffer = Buffer.from(file.base64, 'base64');
 			console.log('buffer', buffer);
 
 			// Analyse du PDF
