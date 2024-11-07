@@ -31,8 +31,6 @@ export function UploadForm() {
 		},
 	});
 
-	// const fileValue = form.watch('file');
-
 	const validateFile = (file: File | null): string | null => {
 		if (!file) return 'Le fichier est requis';
 		if (file.type !== 'application/pdf') {
@@ -94,7 +92,7 @@ export function UploadForm() {
 				throw new Error(result.message || 'Une erreur est survenue');
 			}
 
-			console.log('Résultat:', result);
+			console.log('Résumé:', result.data);
 			setProgress(100);
 
 		} catch (error) {
