@@ -63,13 +63,15 @@ export function UploadForm() {
 		}
 
 		try {
-			console.log('début du try avant lexec serv action');
+			console.log("Début de l'analyse...");
 			setIsAnalyzing(true);
 			setProgress(0);
 
 			const arrayBuffer = await selectedFile.arrayBuffer();
 			const base64 = Buffer.from(arrayBuffer).toString('base64');
+			console.log('base64', base64);
 
+			console.log('Envoi de la requête à /api/analyze');
 			const response = await fetch('/api/analyze', {
 				method: 'POST',
 				headers: {
@@ -86,7 +88,19 @@ export function UploadForm() {
 				}),
 			});
 
-			const result = await response.json();
+			console.log('Réponse reçue, status:', response.status);
+
+			// Tentative de lecture du corps de la réponse
+			const responseText = await response.text();
+			console.log('Réponse brute:', responseText);
+
+			let result;
+			try {
+				result = JSON.parse(responseText);
+			} catch (e) {
+				console.error('Erreur de parsing de la réponse:', e);
+				throw new Error('Réponse invalide du serveur');
+			}
 
 			if (!response.ok) {
 				throw new Error(result.message || 'Une erreur est survenue');
@@ -94,9 +108,10 @@ export function UploadForm() {
 
 			console.log('Résumé:', result.data);
 			setProgress(100);
-
 		} catch (error) {
-			console.error('Error:', error);
+			console.error('Erreur complète:', error);
+			// Vous pouvez ajouter ici un état pour afficher l'erreur à l'utilisateur
+			setFileError(error.message);
 		} finally {
 			setIsAnalyzing(false);
 		}
