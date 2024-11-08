@@ -71,8 +71,8 @@ export function UploadForm() {
 			const base64 = Buffer.from(arrayBuffer).toString('base64');
 			console.log('base64', base64);
 
-			console.log('Envoi de la requête à /api/analyze');
-			const response = await fetch('/api/analyze', {
+			console.log('Envoi de la requête à /api/upload');
+			const response = await fetch('/api/upload', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
